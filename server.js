@@ -85,15 +85,16 @@ fastify.get("/generate_xdr", async function(request, reply){
       console.log(data)
       resp["xdr"] = data
       
-          reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
-    reply.raw.write(JSON.stringify(resp))
-    reply.raw.end()
+      reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+      reply.raw.write(JSON.stringify(resp))
+      reply.raw.end()
       
     });
   
-    
+      /*reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+      reply.raw.write(JSON.stringify({"err": "nesh"}))
+      reply.raw.end()*/
   
-
   
 })
 
@@ -137,6 +138,10 @@ fastify.post("/", function(request, reply) {
   // The Handlebars template will use the parameter values to update the page with the chosen color
   reply.view("/src/pages/index.hbs", params);
 });
+
+fastify.get('/timeline', function(request,reply){
+  reply.view("/public/timeline.html")
+})
 
 // Run the server and report out to the logs
 fastify.listen(process.env.PORT, '0.0.0.0', function(err, address) {
