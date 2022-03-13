@@ -1,0 +1,29 @@
+NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
+SIGNING_KEY="GBBHQ7H4V6RRORKYLHTCAWP6MOHNORRFJSDPXDFYDGJB2LPZUFPXUEW3"
+
+[DOCUMENTATION]
+ORG_NAME="Nesho LLC"
+ORG_URL="https://concrete-mint-measure.glitch.me"
+ORG_LOGO="https://images-na.ssl-images-amazon.com/images/S/pv-target-images/fc1d7e063c49e5fb46969b37b996203ea25e51b54fd4428a28edee365b659821._RI_.jpg"
+ORG_DESCRIPTION="Nesho LLC is not a real company. It's just one person who's bored and does random coding projects instead of going outside."
+ORG_PHYSICAL_ADDRESS="123 Sesame Street, Berlin, Germany"
+ORG_PHONE_NUMBER="1 (123)-456-7890"
+ORG_KEYBASE="matejmecka"
+ORG_TWITTER="matejmecka"
+ORG_GITHUB="matejmecka"
+ORG_OFFICIAL_EMAIL="matej.plavevski+stellar-hackathon@gmail.com"
+
+
+[[PRINCIPALS]]
+name="Nesho"
+email="matej.plavevski+stellar-hackathon@gmail.com"
+keybase="matejmecka"
+twitter="matejmecka"
+github="matejmecka"
+
+
+[[CURRENCIES]]
+code="HotPotato"
+issuer=""
+display_decimals=2
+desc="Hot Potato"

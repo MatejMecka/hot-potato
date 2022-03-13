@@ -5,6 +5,7 @@
 
 const path = require("path");
 const contract = require("./contract.js")
+const fs = require("fs")
 
 // Require the fastify framework and instantiate it
 const fastify = require("fastify")({
@@ -156,6 +157,12 @@ fastify.post("/", function(request, reply) {
 
 fastify.get('/timeline', function(request,reply){
   reply.view("/public/timeline.html")
+})
+
+fastify.get('/.well-known/stellar.toml', function(request,reply){
+  const stream = fs.createReadStream("public/stellar.toml")
+  reply.raw.writeHead(200, { 'Access-Control-Allow-Origin': '*' })
+  reply.type('text').send(stream)
 })
 
 // Run the server and report out to the logs
