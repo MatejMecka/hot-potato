@@ -14,8 +14,7 @@ const fastify = require("fastify")({
 
 fastify.register(require('fastify-cors'), { 
   // put your options here
-  origin: "*",
-  methods: ["POST", "GET"]       
+  origin: false,     
 })
 
 // ADD FAVORITES ARRAY VARIABLE FROM TODO HERE
@@ -92,7 +91,7 @@ fastify.get("/generate_xdr", async function(request, reply){
         console.log(data)
         resp["xdr"] = data
 
-        reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+        reply.raw.writeHead(200, { 'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*' })
         reply.raw.write(JSON.stringify(resp))
         reply.raw.end()
 
@@ -100,7 +99,7 @@ fastify.get("/generate_xdr", async function(request, reply){
         resp["err"] = err.toString()
         console.log(err)
         
-        reply.raw.writeHead(400, { 'Content-Type': 'text/json' })
+        reply.raw.writeHead(400, { 'Content-Type': 'text/json', 'Access-Control-Allow-Origin': '*' })
         reply.raw.write(JSON.stringify(resp))
         reply.raw.end()
       })
