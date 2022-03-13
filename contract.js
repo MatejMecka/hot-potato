@@ -2,7 +2,7 @@ const { Server, Networks, TransactionBuilder, Operation, Asset, Keypair } = requ
 const server = new Server("https://horizon-testnet.stellar.org")
 require('dotenv').config()
 
-const NFT_ASSET = new Asset("hOtPotato", process.env.PUBLIC_KEY)
+const NFT_ASSET = new Asset(process.env.ASSET_CODE, process.env.PUBLIC_KEY)
 const TIMEBOUNDS = 2
 
 function queryTrades(person, search_time_bounds = false) {
@@ -94,7 +94,8 @@ module.exports.getXDR = async (body) => {
               // 1. Mint the Asset
               transaction.addOperation(
                   Operation.setOptions({
-                  setFlags: 15, // This is where we configure the NFT we're about the issue as an auth required asset
+                  setFlags: 15,
+                  homeDomain: process.env.HOME_DOMAIN, // This is where we configure the NFT we're about the issue as an auth required asset
                   source: NFT_ASSET.issuer
               }))
 
