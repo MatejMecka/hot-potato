@@ -36,12 +36,12 @@
         <input field="text" id="dest-account" placeholder="GCLXKLJXXXXXXXXXXXXXXX" />
         <button onclick="handleTransaction()">Pass Potato</button>
     </div>
-    <h6 id="person">Sign the transaction and click proceed with partial tx</h6>
+    <h6>Sign the transaction and click proceed with partial tx</h6>
   </body>
   <script>
-    let account = "GCLXKLJPID2KUSIYD74LM67E5YEV5T3TOXUCG35DNJRUNLWR5F7LUJ7R"
-    const issuer = "GCLXKLJPID2KUSIYD74LM67E5YEV5T3TOXUCG35DNJRUNLWR5F7LUJ7R"
-    const assetCode = "hOtPotato"
+    let account = "GATJJTRKS7TTFXKII53YAIG6G6T6A3RMQ5KUTICY5WDESNIRDZTVZFLU"
+    const issuer = "GATJJTRKS7TTFXKII53YAIG6G6T6A3RMQ5KUTICY5WDESNIRDZTVZFLU"
+    const assetCode = "HotPotato"
 
     function msToTime(duration) {
         var milliseconds = Math.floor((duration % 1000) / 100),
@@ -59,7 +59,9 @@
     fetch(`https://horizon-testnet.stellar.org/accounts/${account}`)
       .then(res => res.json())
       .then(data => {
+          console.log(data["data"] == )
           const currentOwner = atob(data["data"]["currentAccount"])
+          
           account = currentOwner
           let elem = document.getElementById("person")
           elem.innerHTML = elem.innerHTML.replace("someone", account)  
