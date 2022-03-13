@@ -1,0 +1,45 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://unpkg.com/@albedo-link/intent@0.11.2/lib/albedo.intent.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
+
+        h1,p {
+            font-family: 'Roboto Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the final step!</h1>
+    <p>One final signature is required to complete the pass. The URL you received and opened contains a transaction that will transfer the potato to your account.</p>
+    <p>Once you get the signature, albedo will automatically submit it to the Stellar Blockchain.</p>
+    <p>When that goal is complete your mission will be to pass it onto someone else. Or not, idk I'm just text on a screen here, you're the one deciding.</p>
+    <p id="url">To pass the potato you can visit [URL] and input the destination account of the next person who'll receive the potato. </p>
+    <button onclick="handleTransaction()">Sign with Albedo</button>
+</body>
+<script>
+    let elem = document.querySelector('#url')
+    elem.innerHTML = elem.innerHTML.replace('[URL]', window.location.hostname)
+
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+
+    const handleTransaction = async function(){
+        await albedo.tx({
+            xdr: params.xdr,    
+            network: 'testnet',
+            submit: 'true',
+        }).then(res => {
+            console.log(res.xdr, res.tx_hash, res.signed_envelope_xdr, res.network, res.result)
+            alert("Congrats! You're a proud owner of a hot potato! Now go spread it")
+        }).catch(err => {
+          console.log(err)
+        })
+    }
+
+</script>
+</html>
