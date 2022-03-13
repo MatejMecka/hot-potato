@@ -4,6 +4,7 @@
 */
 
 const path = require("path");
+const contract = require("./contract.js")
 
 // Require the fastify framework and instantiate it
 const fastify = require("fastify")({
@@ -71,6 +72,22 @@ fastify.get("/", function(request, reply) {
 *
 * Accepts body data indicating the user choice
 */
+
+fastify.get("/generate_xdr", async function(request, reply){
+    const source = request.query.source
+    const destination = request.query.destination
+    
+    console.log(source)
+    console.log(destination)
+    
+    const xdr = await contract(source=source, destination=destination);
+  
+    reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+    reply.raw.write(JSON.stringify({"xdr": xdr}))
+    reply.raw.end()
+  
+})
+
 fastify.post("/", function(request, reply) {
   
   // Build the params object to pass to the template
