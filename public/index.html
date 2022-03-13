@@ -10,7 +10,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
 
         body {
-            background-image: url("https://source.unsplash.com/random/?mountains");
+            background-image: url("https://source.unsplash.com/random/?iceland");
             background-repeat: no-repeat;
             display: flex;
             justify-content: center;
@@ -107,6 +107,8 @@
 
     handleTransaction = function(){
         let dest_account = document.querySelector('#dest-account').value
+        let submit = false
+        
         albedo.publicKey({
             token: 'gOe2GgetOcIOkllLyKhooElhwICBKF1arhUJAdH1Vs0='
         }).then(
@@ -124,6 +126,7 @@
               
                 if(dest_account == ""){
                   dest_account = issuer
+                  submit = true
                 }
 
                 await fetch(`https://concrete-mint-measure.glitch.me/generate_xdr?source=${res.pubkey}&destination=${dest_account}`, {
@@ -138,11 +141,16 @@
                     } else {
                         albedo.tx({
                             xdr: xdr,
-                            network: 'testnet'
+                            network: 'testnet',
+                            submit: submit
                         }).then(res => {
+                          if(submit == false){
                             alert(`You're one step closer to passing the potato! Send the following link to your friend ${window.location.hostname}/complete-pass?xdr=${btoa(res.signed_envelope_xdr)}`)
-                        }).catch(err => {
-                            alert(err)
+                          } else {
+                            alert(`Congragulations! You are a proud owner of a potato. Revisit the page and select a destination :D`)
+                          }
+                          }).catch(err => {
+                            console.log(err)
                         })
                     }
 

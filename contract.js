@@ -159,6 +159,18 @@ const {
                 source: NFT_ASSET.issuer,
               })
             );
+
+            transaction.addOperation(
+                Operation.setTrustLineFlags({
+                  // This is the first authorization open operation for the new NFT allowing it to be minted from the issuing account to the mint/royalty user account
+                  trustor: person_who_holds_the_potato,
+                  asset: WINNER_NFT_ASSET,
+                  flags: {
+                    authorized: true,
+                  },
+                  source: NFT_ASSET.issuer,
+                })
+              );
   
             transaction.addOperation(
               Operation.manageSellOffer({
