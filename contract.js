@@ -14,6 +14,8 @@ const {
   
   function queryTrades(person, search_time_bounds = false) {
     let cursor = "";
+    // Todo: Figure out how to use next recursively to download all trades
+    // This is just a POC
     return new Promise(function (resolve, reject) {
       server
         .trades()
