@@ -40,6 +40,7 @@ function queryTrades(person, search_time_bounds = false) {
             resolve(true)
         }).catch(err => {
           reject(Error("Network Request Failed"))
+          return
         });
     })
 }
@@ -56,22 +57,26 @@ module.exports.getXDR = async (body) => {
         Keypair.fromPublicKey(person_who_holds_the_potato)
       } catch (err) {
         reject(Error("Invalid Public Key for Source"))
+        return
       }
     
       try {
         Keypair.fromPublicKey(person_who_gets_the_potato)
       } catch (err) {
         reject(Error("Invalid Public Key for Destination"))
+        return
       }
 
       // We need to transfer the potato from the source to the destination
       if(!person_who_holds_the_potato || !person_who_gets_the_potato) {
           reject(Error("Missing source or destination"))
+        return
       }
 
       // No passing to the same account
       if (person_who_holds_the_potato === person_who_gets_the_potato) {
           reject(Error("Source and destination cannot be the same"))
+          return
       }
 
 
