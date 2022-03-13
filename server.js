@@ -81,15 +81,24 @@ fastify.get("/generate_xdr", async function(request, reply){
     //console.log(destination)
     let resp = {}
     
-    contract.getXDR({source: source, destination: destination}).then((data) => {
-      console.log(data)
-      resp["xdr"] = data
+    try { 
+      contract.getXDR({source: source, destination: destination}).then((data) => {
+        console.log(data)
+        resp["xdr"] = data
+
+        reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+        reply.raw.write(JSON.stringify(resp))
+        reply.raw.end()
+
+      })
+    } catch (err) {
+      resp["err"] = err
+      //console.log(err)
       
-      reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+      reply.raw.writeHead(400, { 'Content-Type': 'text/json' })
       reply.raw.write(JSON.stringify(resp))
       reply.raw.end()
-      
-    });
+    }
   
       /*reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
       reply.raw.write(JSON.stringify({"err": "nesh"}))

@@ -38,6 +38,8 @@ function queryTrades(person, search_time_bounds = false) {
                 }           
             }
             resolve(true)
+        }).catch(err => {
+          reject(Error("Network Request Failed"))
         });
     })
 }
@@ -45,10 +47,22 @@ function queryTrades(person, search_time_bounds = false) {
 
 module.exports.getXDR = async (body) => {
   return new Promise(async function(resolve, reject){
-    const { source: person_who_holds_the_potato, destination: person_who_gets_the_potato } = body
+      const { source: person_who_holds_the_potato, destination: person_who_gets_the_potato } = body
 
-    console.log(person_who_holds_the_potato)
-    console.log(person_who_gets_the_potato)
+      console.log(person_who_holds_the_potato)
+      console.log(person_who_gets_the_potato)
+    
+      try {
+        Keypair.fromPublicKey(person_who_holds_the_potato)
+      } catch (err) {
+        reject(Error("Invalid Public Key for Source"))
+      }
+    
+      try {
+        Keypair.fromPublicKey(person_who_gets_the_potato)
+      } catch (err) {
+        reject(Error("Invalid Public Key for Destination"))
+      }
 
       // We need to transfer the potato from the source to the destination
       if(!person_who_holds_the_potato || !person_who_gets_the_potato) {
