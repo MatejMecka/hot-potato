@@ -59,7 +59,19 @@
     fetch(`https://horizon-testnet.stellar.org/accounts/${account}`)
       .then(res => res.json())
       .then(data => {
-          console.log(data["data"] == )
+          if(data["data"]["currentAccount"] == undefined){
+            // Change Countdown
+            document.getElementById("countdown").innerHTML = "START"
+            
+            if(account == issuer){
+                dest_account = issuer
+                document.querySelector('#dest-account').style.display='none'
+            } 
+            
+            
+            
+            return
+          }
           const currentOwner = atob(data["data"]["currentAccount"])
           
           account = currentOwner
@@ -94,22 +106,25 @@
 
 
     handleTransaction = function(){
-        const dest_account = document.querySelector('#dest-account').value
+        let dest_account = document.querySelector('#dest-account').value
         albedo.publicKey({
             token: 'gOe2GgetOcIOkllLyKhooElhwICBKF1arhUJAdH1Vs0='
         }).then(
             async function(res){
                 console.log(res.pubkey, res.signed_message, res.signature)
 
-                if(res.pubkey == account){
-                    console.log("Valid")
-
-
-
-                } else {
-                    alert("It looks like you're not holding the hot potato")
+                if(account !== issuer){
+                  if(res.pubkey == account){
+                      console.log("Valid")
+                  } else {
+                      alert("It looks like you're not holding the hot potato")
+                    return
+                  }
                 }
-
+              
+                if(dest_account == ""){
+                  dest_account = issuer
+                }
 
                 await fetch(`https://concrete-mint-measure.glitch.me/generate_xdr?source=${res.pubkey}&destination=${dest_account}`, {
                 }).then(
