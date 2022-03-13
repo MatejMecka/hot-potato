@@ -43,227 +43,233 @@ function queryTrades(person, search_time_bounds = false) {
 }
 
 
-module.exports = async (body) => {
+module.exports.getXDR = async (body) => {
+  return new Promise(async function(resolve, reject){
     const { source: person_who_holds_the_potato, destination: person_who_gets_the_potato } = body
 
-    // We need to transfer the potato from the source to the destination
-    if(!person_who_holds_the_potato || !person_who_gets_the_potato) {
-        throw new Error("Missing source or destination")
-    }
+    console.log(person_who_holds_the_potato)
+    console.log(person_who_gets_the_potato)
 
-    // No passing to the same account
-    if (person_who_holds_the_potato === person_who_gets_the_potato) {
-        throw new Error("Source and destination cannot be the same")
-    }
+      // We need to transfer the potato from the source to the destination
+      if(!person_who_holds_the_potato || !person_who_gets_the_potato) {
+          reject(Error("Missing source or destination"))
+      }
 
-
-    const account = await server.loadAccount(person_who_holds_the_potato);
-    const fee = await server.fetchBaseFee();
-    let transaction = new TransactionBuilder(account, { fee, networkPassphrase: Networks.TESTNET })
+      // No passing to the same account
+      if (person_who_holds_the_potato === person_who_gets_the_potato) {
+          reject(Error("Source and destination cannot be the same"))
+      }
 
 
-    // Check if the Asset is issued
-    server.assets().forCode(NFT_ASSET.code).forIssuer(NFT_ASSET.issuer).call().then(async function(asset) {
-        if(asset["records"].length === 0){
-            console.log("Asset not issued yet")            
-            // Not issued  
+      const account = await server.loadAccount(person_who_holds_the_potato);
+      const fee = await server.fetchBaseFee();
+      let transaction = new TransactionBuilder(account, { fee, networkPassphrase: Networks.TESTNET })
 
-            // 1. Mint the Asset
-            transaction.addOperation(
-                Operation.setOptions({
-                setFlags: 15, // This is where we configure the NFT we're about the issue as an auth required asset
-                source: NFT_ASSET.issuer
-            }))
 
-            // 2. Finally the other person can accept it.
-            transaction.addOperation(Operation.changeTrust({
-                asset: NFT_ASSET,
-                limit: "1"
-            }))
+      // Check if the Asset is issued
+      server.assets().forCode(NFT_ASSET.code).forIssuer(NFT_ASSET.issuer).call().then(async function(asset) {
+          if(asset["records"].length === 0){
+              console.log("Asset not issued yet")            
+              // Not issued  
 
-            const WINNER_NFT_ASSET = new Asset("Potat", process.env.PUBLIC_KEY)
-
-            transaction.addOperation(
-                Operation.changeTrust({
-                    asset: WINNER_NFT_ASSET,
-                    limit: "1"
-                })
-            )
-            
-            transaction.addOperation(
-                Operation.setTrustLineFlags({ // This is the first authorization open operation for the new NFT allowing it to be minted from the issuing account to the mint/royalty user account
-                trustor: person_who_holds_the_potato,
-                asset: NFT_ASSET,
-                flags: {
-                  authorized: true
-                },
-                source: NFT_ASSET.issuer
+              // 1. Mint the Asset
+              transaction.addOperation(
+                  Operation.setOptions({
+                  setFlags: 15, // This is where we configure the NFT we're about the issue as an auth required asset
+                  source: NFT_ASSET.issuer
               }))
 
-            transaction.addOperation(
-                Operation.setTrustLineFlags({ // This is the first authorization open operation for the new NFT allowing it to be minted from the issuing account to the mint/royalty user account
-                trustor: person_who_holds_the_potato,
-                asset: WINNER_NFT_ASSET,
-                flags: {
-                  authorized: true
-                },
-                source: WINNER_NFT_ASSET.issuer
-            }))
+              // 2. Finally the other person can accept it.
+              transaction.addOperation(Operation.changeTrust({
+                  asset: NFT_ASSET,
+                  limit: "1"
+              }))
 
-            transaction.addOperation(
-                Operation.manageSellOffer({
-                    selling: NFT_ASSET,
-                    buying: Asset.native(),
-                    amount: "0.0000001",
-                    price: "1",
-                    offerId: "0",
-                    //source: process.env.TEMP_DISTRIBUTOR_PUBLIC_KEY
-                    source: NFT_ASSET.issuer
-                })
-            )
+              const WINNER_NFT_ASSET = new Asset("Potat", process.env.PUBLIC_KEY)
 
-            transaction.addOperation(
-                Operation.manageBuyOffer({
-                    buying: NFT_ASSET,
-                    selling: Asset.native(),
-                    buyAmount: "0.0000001",
-                    price: "3",
-                    offerId: "0",
-                })
-            )
+              transaction.addOperation(
+                  Operation.changeTrust({
+                      asset: WINNER_NFT_ASSET,
+                      limit: "1"
+                  })
+              )
 
-            transaction.addOperation(Operation.payment({
-                asset: WINNER_NFT_ASSET,
-                amount: "0.0000001",
-                destination: person_who_holds_the_potato,
-                source: NFT_ASSET.issuer
-            }))
-
-            transaction.addOperation(
-                Operation.setTrustLineFlags({ // Now that the payment for the NFT has been made we close the authorization effectively locking down the NFT into the user account where they may now hold the NFT but not sell it unless they do so through the authorized/official `offer.js` contract
-                    trustor: person_who_holds_the_potato,
-                    asset: NFT_ASSET,
-                    flags: {
-                        authorized: false
-                    },
-                    source: NFT_ASSET.issuer
-            }))
-
-            transaction.addOperation(Operation.manageData({
-                name: "currentAccount",
-                value: person_who_gets_the_potato,
-                source: NFT_ASSET.issuer
-            }))
-
-              transaction.setTimeout(0)
-              transaction = transaction.build()
-              transaction.sign(Keypair.fromSecret(process.env.PRIV_KEY));
-              console.log(transaction.toXDR())
-              return transaction.toXDR()
-
-        }
-
-        else { 
-            // Asset is issued
-            // Check if owned already
-
-            console.log("ASSET IS ISSUED!")
-
-            
-            console.log("SEARCHING FOR OWNERSHIP OF ASSET")
-            await queryTrades(person_who_gets_the_potato, false).catch(err => {
-                console.log(err)
-                throw new Error("Already owned")
-            })
-                
-            // Check if timebounds are valid
-            queryTrades(person_who_holds_the_potato, true).then(data => {
-                // Transfer the potato
-                // 1. Approve of transfer
-                transaction.addOperation(
-                    Operation.setTrustLineFlags({
-                        trustor: person_who_holds_the_potato,
-                        asset: NFT_ASSET,
-                        flags: {
-                            authorized: true,
-                        },
-                        source: NFT_ASSET.issuer
-                    }),
-                )
-
-                // 2. Establiish trustline
-                transaction.addOperation(
-                    Operation.changeTrust({
-                        asset: NFT_ASSET,
-                        limit: '1',
-                        source: person_who_gets_the_potato
-                    }),
-                )
-
-                transaction.addOperation(
-                    Operation.setTrustLineFlags({
-                    trustor: person_who_gets_the_potato,
-                    asset: NFT_ASSET,
-                    flags: {
-                        authorized: true,
-                    },
-                    source: NFT_ASSET.issuer
-                }),
-                )
-
-                // 3. Transfer the Asset
-                transaction.addOperation(
-                    Operation.manageSellOffer({
-                        selling: NFT_ASSET,
-                        buying: Asset.native(),
-                        amount: "0.0000001",
-                        price: "1",
-                        offerId: "0",
-                        source: person_who_holds_the_potato
-                    })
-                )
-
-                transaction.addOperation(
-                    Operation.manageBuyOffer({
-                        buying: NFT_ASSET,
-                        selling: Asset.native(),
-                        buyAmount: "0.0000001",
-                        price: "3",
-                        offerId: "0",
-                        source: person_who_gets_the_potato
-                    })
-                )
-
-                // 4. Lock the NFT to the user again
-                transaction.addOperation(
-                    Operation.setTrustLineFlags({ // Now that the payment for the NFT has been made we close the authorization effectively locking down the NFT into the user account where they may now hold the NFT but not sell it unless they do so through the authorized/official `offer.js` contract
-                        trustor: person_who_gets_the_potato,
-                        asset: NFT_ASSET,
-                        flags: {
-                            authorized: false
-                        },
-                        source: NFT_ASSET.issuer
+              transaction.addOperation(
+                  Operation.setTrustLineFlags({ // This is the first authorization open operation for the new NFT allowing it to be minted from the issuing account to the mint/royalty user account
+                  trustor: person_who_holds_the_potato,
+                  asset: NFT_ASSET,
+                  flags: {
+                    authorized: true
+                  },
+                  source: NFT_ASSET.issuer
                 }))
 
-                // 5. Update the Account
+              transaction.addOperation(
+                  Operation.setTrustLineFlags({ // This is the first authorization open operation for the new NFT allowing it to be minted from the issuing account to the mint/royalty user account
+                  trustor: person_who_holds_the_potato,
+                  asset: WINNER_NFT_ASSET,
+                  flags: {
+                    authorized: true
+                  },
+                  source: WINNER_NFT_ASSET.issuer
+              }))
 
-                transaction.addOperation(Operation.manageData({
-                    name: "currentAccount",
-                    value: person_who_gets_the_potato,
-                    source: NFT_ASSET.issuer
-                }))
+              transaction.addOperation(
+                  Operation.manageSellOffer({
+                      selling: NFT_ASSET,
+                      buying: Asset.native(),
+                      amount: "0.0000001",
+                      price: "1",
+                      offerId: "0",
+                      //source: process.env.TEMP_DISTRIBUTOR_PUBLIC_KEY
+                      source: NFT_ASSET.issuer
+                  })
+              )
+
+              transaction.addOperation(
+                  Operation.manageBuyOffer({
+                      buying: NFT_ASSET,
+                      selling: Asset.native(),
+                      buyAmount: "0.0000001",
+                      price: "3",
+                      offerId: "0",
+                  })
+              )
+
+              transaction.addOperation(Operation.payment({
+                  asset: WINNER_NFT_ASSET,
+                  amount: "0.0000001",
+                  destination: person_who_holds_the_potato,
+                  source: NFT_ASSET.issuer
+              }))
+
+              transaction.addOperation(
+                  Operation.setTrustLineFlags({ // Now that the payment for the NFT has been made we close the authorization effectively locking down the NFT into the user account where they may now hold the NFT but not sell it unless they do so through the authorized/official `offer.js` contract
+                      trustor: person_who_holds_the_potato,
+                      asset: NFT_ASSET,
+                      flags: {
+                          authorized: false
+                      },
+                      source: NFT_ASSET.issuer
+              }))
+
+              transaction.addOperation(Operation.manageData({
+                  name: "currentAccount",
+                  value: person_who_gets_the_potato,
+                  source: NFT_ASSET.issuer
+              }))
 
                 transaction.setTimeout(0)
                 transaction = transaction.build()
                 transaction.sign(Keypair.fromSecret(process.env.PRIV_KEY));
                 console.log(transaction.toXDR())
+                resolve(transaction.toXDR())
                 return transaction.toXDR()
-            }).catch(err => {
-                console.log(err)
-            })
-            
-        }
-    })
+
+          }
+
+          else { 
+              // Asset is issued
+              // Check if owned already
+
+              console.log("ASSET IS ISSUED!")
 
 
+              console.log("SEARCHING FOR OWNERSHIP OF ASSET")
+              await queryTrades(person_who_gets_the_potato, false).catch(err => {
+                  console.log(err)
+                  reject(Error("Already owned"))
+              })
+
+              // Check if timebounds are valid
+              queryTrades(person_who_holds_the_potato, true).then(data => {
+                  // Transfer the potato
+                  // 1. Approve of transfer
+                  transaction.addOperation(
+                      Operation.setTrustLineFlags({
+                          trustor: person_who_holds_the_potato,
+                          asset: NFT_ASSET,
+                          flags: {
+                              authorized: true,
+                          },
+                          source: NFT_ASSET.issuer
+                      }),
+                  )
+
+                  // 2. Establiish trustline
+                  transaction.addOperation(
+                      Operation.changeTrust({
+                          asset: NFT_ASSET,
+                          limit: '1',
+                          source: person_who_gets_the_potato
+                      }),
+                  )
+
+                  transaction.addOperation(
+                      Operation.setTrustLineFlags({
+                      trustor: person_who_gets_the_potato,
+                      asset: NFT_ASSET,
+                      flags: {
+                          authorized: true,
+                      },
+                      source: NFT_ASSET.issuer
+                  }),
+                  )
+
+                  // 3. Transfer the Asset
+                  transaction.addOperation(
+                      Operation.manageSellOffer({
+                          selling: NFT_ASSET,
+                          buying: Asset.native(),
+                          amount: "0.0000001",
+                          price: "1",
+                          offerId: "0",
+                          source: person_who_holds_the_potato
+                      })
+                  )
+
+                  transaction.addOperation(
+                      Operation.manageBuyOffer({
+                          buying: NFT_ASSET,
+                          selling: Asset.native(),
+                          buyAmount: "0.0000001",
+                          price: "3",
+                          offerId: "0",
+                          source: person_who_gets_the_potato
+                      })
+                  )
+
+                  // 4. Lock the NFT to the user again
+                  transaction.addOperation(
+                      Operation.setTrustLineFlags({ // Now that the payment for the NFT has been made we close the authorization effectively locking down the NFT into the user account where they may now hold the NFT but not sell it unless they do so through the authorized/official `offer.js` contract
+                          trustor: person_who_gets_the_potato,
+                          asset: NFT_ASSET,
+                          flags: {
+                              authorized: false
+                          },
+                          source: NFT_ASSET.issuer
+                  }))
+
+                  // 5. Update the Account
+
+                  transaction.addOperation(Operation.manageData({
+                      name: "currentAccount",
+                      value: person_who_gets_the_potato,
+                      source: NFT_ASSET.issuer
+                  }))
+
+                  transaction.setTimeout(0)
+                  transaction = transaction.build()
+                  transaction.sign(Keypair.fromSecret(process.env.PRIV_KEY));
+                  console.log(transaction.toXDR())
+                  resolve(transaction.toXDR())
+                  return transaction.toXDR()
+              }).catch(err => {
+                  console.log(err)
+              })
+
+          }
+      })
+
+  });
 }

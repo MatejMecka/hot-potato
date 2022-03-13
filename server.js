@@ -74,17 +74,26 @@ fastify.get("/", function(request, reply) {
 */
 
 fastify.get("/generate_xdr", async function(request, reply){
-    const source = request.query.source
-    const destination = request.query.destination
+    let source = request.query.source
+    let destination = request.query.destination
     
-    console.log(source)
-    console.log(destination)
+    //console.log(source)
+    //console.log(destination)
+    let resp = {}
     
-    const xdr = await contract(source=source, destination=destination);
-  
-    reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
-    reply.raw.write(JSON.stringify({"xdr": xdr}))
+    contract.getXDR({source: source, destination: destination}).then((data) => {
+      console.log(data)
+      resp["xdr"] = data
+      
+          reply.raw.writeHead(200, { 'Content-Type': 'text/json' })
+    reply.raw.write(JSON.stringify(resp))
     reply.raw.end()
+      
+    });
+  
+    
+  
+
   
 })
 
