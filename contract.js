@@ -205,6 +205,16 @@ module.exports.getXDR = async (body) => {
               queryTrades(person_who_holds_the_potato, true).then(data => {
                   // Transfer the potato
                   // 1. Approve of transfer
+                  // 2. Establiish trustline
+                  
+                  transaction.addOperation(
+                    Operation.changeTrust({
+                        asset: NFT_ASSET,
+                        limit: '1',
+                        source: person_who_gets_the_potato
+                    }),
+                )
+
                   transaction.addOperation(
                       Operation.setTrustLineFlags({
                           trustor: person_who_holds_the_potato,
@@ -213,15 +223,6 @@ module.exports.getXDR = async (body) => {
                               authorized: true,
                           },
                           source: NFT_ASSET.issuer
-                      }),
-                  )
-
-                  // 2. Establiish trustline
-                  transaction.addOperation(
-                      Operation.changeTrust({
-                          asset: NFT_ASSET,
-                          limit: '1',
-                          source: person_who_gets_the_potato
                       }),
                   )
 

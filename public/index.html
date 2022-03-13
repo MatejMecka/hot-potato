@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://unpkg.com/@albedo-link/intent@0.11.2/lib/albedo.intent.js"></script>
+    <title>Hot Potato</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
+
+        body {
+            background-image: url("https://source.unsplash.com/random/?mountains");
+            background-repeat: no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-family: 'Roboto Mono', monospace;
+            max-width: max-content;
+            margin: auto;
+            min-height:100vh;
+            background-size: 100%;
+        }
+
+        h1 {
+            font-size: 1500%;
+        }
+
+    </style>
+  </head>
+  <body>
+    <h3 id="person">Time remaining until someone gets burned</h3>
+	<h1 id="countdown">00:00:00</h1>
+    <div>
+        <input field="text" id="dest-account" placeholder="GCLXKLJXXXXXXXXXXXXXXX" />
+        <button onclick="handleTransaction()">Pass Potato</button>
+    </div>
+    <h6 id="person">Sign the transaction and click proceed with partial tx</h6>
+  </body>
+  <script>
+    let account = "GCLXKLJPID2KUSIYD74LM67E5YEV5T3TOXUCG35DNJRUNLWR5F7LUJ7R"
+    const issuer = "GCLXKLJPID2KUSIYD74LM67E5YEV5T3TOXUCG35DNJRUNLWR5F7LUJ7R"
+    const assetCode = "hOtPotato"
+
+    function msToTime(duration) {
+        var milliseconds = Math.floor((duration % 1000) / 100),
+            seconds = Math.floor((duration / 1000) % 60),
+            minutes = Math.floor((duration / (1000 * 60)) % 60),
+            hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+
+        hours = (hours < 10) ? "0" + hours : hours;
+        minutes = (minutes < 10) ? "0" + minutes : minutes;
+        seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+        return hours + ":" + minutes + ":" + seconds;
+    }
+        
+    fetch(`https://horizon-testnet.stellar.org/accounts/${account}`)
+      .then(res => res.json())
+      .then(data => {
+          const currentOwner = atob(data["data"]["currentAccount"])
+          account = currentOwner
+          let elem = document.getElementById("person")
+          elem.innerHTML = elem.innerHTML.replace("someone", account)  
+          console.log(currentOwner)
+          fetch(`https://horizon-testnet.stellar.org/accounts/${currentOwner}/trades`)
+          .then(res2 => res2.json())
+          .then(data2 => {
+              data2["_embedded"]["records"].forEach(trade => {
+                  if(trade["counter_asset_code"] == assetCode && trade['counter_asset_issuer'] == issuer){
+                    console.log(trade)
+
+                    const ledger_date = new Date(trade['ledger_close_time'])
+                    
+
+                    setInterval(() => {
+                        const time_diff = new Date() - ledger_date
+                        const remaining_time = 8.64e+7 - time_diff
+                        const time_left = msToTime(remaining_time)
+                        document.getElementById("countdown").innerHTML = time_left
+                    }, 1000)
+
+                  }
+              })
+          })
+        
+
+          
+
+    })
+
+
+    handleTransaction = function(){
+        const dest_account = document.querySelector('#dest-account').value
+        albedo.publicKey({
+            token: 'gOe2GgetOcIOkllLyKhooElhwICBKF1arhUJAdH1Vs0='
+        }).then(
+            async function(res){
+                console.log(res.pubkey, res.signed_message, res.signature)
+
+                if(res.pubkey == account){
+                    console.log("Valid")
+
+
+
+                } else {
+                    alert("It looks like you're not holding the hot potato")
+                }
+
+
+                await fetch(`https://concrete-mint-measure.glitch.me/generate_xdr?source=${res.pubkey}&destination=${dest_account}`, {
+                }).then(
+                    res => res.json()
+                ).then(data => {
+                    const xdr = data.xdr
+                    console.log(xdr)
+
+                    if (xdr == undefined){
+                        alert(data.err)
+                    } else {
+                        albedo.tx({
+                            xdr: xdr,
+                            network: 'testnet'
+                        }).then(res => {
+                            alert(`You're one step closer to passing the potato! Send the following link to your friend ${window.location.hostname}/complete-pass?xdr=${btoa(res.signed_envelope_xdr)}`)
+                        }).catch(err => {
+                            alert(err)
+                        })
+                    }
+
+                })
+
+            
+            }
+        )
+    
+    }
+
+      
+  </script>
+</html>

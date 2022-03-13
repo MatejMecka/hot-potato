@@ -30,7 +30,7 @@
 
     const handleTransaction = async function(){
         await albedo.tx({
-            xdr: params.xdr,    
+            xdr: atob(params.xdr),    
             network: 'testnet',
             submit: 'true',
         }).then(res => {
