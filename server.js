@@ -12,6 +12,12 @@ const fastify = require("fastify")({
   logger: false
 });
 
+fastify.register(require('fastify-cors'), { 
+  // put your options here
+  origin: "*",
+  methods: ["POST", "GET"]       
+})
+
 // ADD FAVORITES ARRAY VARIABLE FROM TODO HERE
 
 
